@@ -330,22 +330,7 @@ function gerarChaveAleatoria() {
 }
 
 function redirecionarParaPagamento(chave) {
-  const tipo  = Estado.tipoSelecionado;
-  const { final } = calcularPrecoFinal(tipo.preco_original);
-  const d = new Date(Estado.dataSelecionada + 'T00:00:00');
-
-  sessionStorage.setItem('agendamento', JSON.stringify({
-    chave,
-    tipo:     tipo.nome,
-    data:     `${d.getDate()} de ${MESES_PT[d.getMonth()]} de ${d.getFullYear()}`,
-    hora:     Estado.horarioSelecionado,
-    duracao:  tipo.duracao_minutos,
-    valor:    final.toFixed(2).replace('.', ','),
-    nome:     document.getElementById('f-nome').value.trim(),
-    whatsapp: document.getElementById('f-fone').value.trim(),
-  }));
-
-  window.location.href = 'pagamento.html';
+  // Substituído por modal-agendamento.js (window.redirecionarParaPagamento)
 }
 
 // ============================================================

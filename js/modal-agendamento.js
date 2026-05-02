@@ -4,9 +4,9 @@
    carregarTiposLeitura, carregarCalendario, MESES_PT)
    ============================================================ */
 
-const MODAL_WHATSAPP = '5527998528483'; // ⚠️ substituir se mudar
-const MODAL_PIX      = 'cocarsagrado@gmail.com';        // ⚠️ substituir
-const MODAL_WISE     = 'pagamentos@cocarsagrado.com';   // ⚠️ substituir
+const MODAL_WHATSAPP = '5527998528483'; 
+const MODAL_PIX      = 'cocarsagrado@gmail.com';        
+const MODAL_WISE     = 'cocarsagrado@gmail.com';   
 
 let _dadosPagamento = null;
 let _calendarioOk   = false;
@@ -105,7 +105,6 @@ window.redirecionarParaPagamento = function(chave) {
     whatsapp: document.getElementById('f-fone').value.trim(),
   };
 
-  // Mantém compat. com pagamento.html (caso o usuário abra diretamente)
   sessionStorage.setItem('agendamento', JSON.stringify(_dadosPagamento));
 
   _preencherTelaPagamento();
