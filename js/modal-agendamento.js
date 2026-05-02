@@ -14,12 +14,14 @@ let _calendarioOk   = false;
 // ============================================================
 // Abrir / Fechar
 // ============================================================
-function abrirModal() {
+function abrirModal(tipo) {
+  if (tipo) Estado.tipoSelecionado = tipo;
   const overlay = document.getElementById('modalAgendamento');
   if (!overlay) return;
   overlay.classList.add('open');
   document.body.classList.add('modal-aberto');
   overlay.querySelector('.modal-body')?.scrollTo({ top: 0 });
+  irParaPasso(1);
 }
 
 function fecharModal(forcar) {
@@ -51,6 +53,7 @@ function _resetarModal() {
 
   _mostrarTela(1, false);
   _irParaPassoBase && _irParaPassoBase(1);
+  _calendarioOk = false;
 }
 
 // ============================================================
@@ -136,7 +139,7 @@ function _preencherTelaPagamento() {
 const _irParaPassoBase = window.irParaPasso;
 
 window.irParaPasso = function(num) {
-  if (num === 2 && !_calendarioOk) {
+  if (num === 1 && !_calendarioOk) {
     _calendarioOk = true;
     carregarCalendario();
   }
