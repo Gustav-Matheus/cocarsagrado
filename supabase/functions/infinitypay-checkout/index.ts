@@ -1,6 +1,6 @@
-const HANDLE = Deno.env.get('INFINITYPAY_HANDLE') ?? 'matheus111gustav'
-const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://cocarsagrado.com.br'
-const WEBHOOK_URL = Deno.env.get('WEBHOOK_URL') ?? ''
+const ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN') ?? ''
+const SITE_URL     = Deno.env.get('SITE_URL') ?? 'https://cocarsagrado.com.br'
+const WEBHOOK_URL  = Deno.env.get('WEBHOOK_URL') ?? ''
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -12,28 +12,43 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
 
   try {
-    const { chave, tipo, valor, nome, whatsapp } = await req.json()
-    const valorCentavos = Math.round(parseFloat(String(valor).replace(',', '.')) * 100)
+    const { chave, tipo, valor, nome } = await req.json()
+    const unitPrice = parseFloat(String(valor).replace(',', '.'))
 
-    const body: Record<string, unknown> = {
-      handle: HANDLE,
-      order_nsu: chave,
-      redirect_url: SITE_URL,
-      ...(WEBHOOK_URL && { webhook_url: WEBHOOK_URL }),
-      items: [{ quantity: 1, price: valorCentavos, description: tipo }],
+    const preference = {
+      items: [{
+        title: tipo,
+        quantity: 1,
+        unit_price: unitPrice,
+        currency_id: 'BRL',
+      }],
+      ...(nome && { payer: { name: nome } }),
+      back_urls: {
+        success: SITE_URL,
+        failure: SITE_URL,
+        pending: SITE_URL,
+      },
+      auto_return: 'approved',
+      external_reference: chave,
+      ...(WEBHOOK_URL && { notification_url: WEBHOOK_URL }),
+      payment_methods: {
+        excluded_payment_types: [
+          { id: 'debit_card' },
+          { id: 'bank_transfer' },
+          { id: 'ticket' },
+          { id: 'atm' },
+        ],
+        installments: 12,
+      },
     }
 
-    if (nome) {
-      body.customer = {
-        name: nome,
-        ...(whatsapp && { phone_number: `+55${String(whatsapp).replace(/\D/g, '')}` }),
-      }
-    }
-
-    const res = await fetch('https://api.checkout.infinitepay.io/links', {
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify(preference),
     })
 
     const data = await res.json()
@@ -45,7 +60,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ url: data.url }), {
+    return new Response(JSON.stringify({ url: data.init_point }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
