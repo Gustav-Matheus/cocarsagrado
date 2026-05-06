@@ -1,6 +1,6 @@
-const ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN') ?? ''
-const SITE_URL     = Deno.env.get('SITE_URL') ?? 'https://cocarsagrado.com.br'
-const WEBHOOK_URL  = Deno.env.get('WEBHOOK_URL') ?? ''
+const HANDLE      = Deno.env.get('INFINITYPAY_HANDLE') ?? 'matheus111gustav'
+const SITE_URL    = Deno.env.get('SITE_URL') ?? 'https://cocarsagrado.com.br'
+const WEBHOOK_URL = Deno.env.get('WEBHOOK_URL') ?? ''
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -13,42 +13,25 @@ Deno.serve(async (req) => {
 
   try {
     const { chave, tipo, valor, nome } = await req.json()
-    const unitPrice = parseFloat(String(valor).replace(',', '.'))
+    const price = Math.round(parseFloat(String(valor).replace(',', '.')) * 100)
 
-    const preference = {
+    const payload: Record<string, unknown> = {
+      handle: HANDLE,
       items: [{
-        title: tipo,
         quantity: 1,
-        unit_price: unitPrice,
-        currency_id: 'BRL',
+        price,
+        description: tipo,
       }],
-      ...(nome && { payer: { name: nome } }),
-      back_urls: {
-        success: SITE_URL,
-        failure: SITE_URL,
-        pending: SITE_URL,
-      },
-      auto_return: 'approved',
-      external_reference: chave,
-      ...(WEBHOOK_URL && { notification_url: WEBHOOK_URL }),
-      payment_methods: {
-        excluded_payment_types: [
-          { id: 'debit_card' },
-          { id: 'bank_transfer' },
-          { id: 'ticket' },
-          { id: 'atm' },
-        ],
-        installments: 12,
-      },
+      order_nsu: chave,
+      redirect_url: SITE_URL,
+      ...(WEBHOOK_URL && { webhook_url: WEBHOOK_URL }),
+      ...(nome && { customer: { name: nome } }),
     }
 
-    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+    const res = await fetch('https://api.checkout.infinitepay.io/links', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify(preference),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     })
 
     const data = await res.json()
@@ -60,7 +43,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ url: data.init_point }), {
+    const url = data.url ?? data.link ?? data.checkout_url ?? data.payment_url
+
+    return new Response(JSON.stringify({ url }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
