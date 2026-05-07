@@ -6,3 +6,10 @@ supabase-setup.sql
 
 # Grafo de análise de código
 .code-review-graph/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
